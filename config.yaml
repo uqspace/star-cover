@@ -1,0 +1,11 @@
+output:
+
+  # Magnitude is an inverse logarithmic scale, with decreasing brightness
+  # having a increasing magnitude. For more information, see
+  # https://www.wikiwand.com/en/Magnitude_(astronomy)
+  max_magnitude: 6.5
+  field_of_view: 180          # deg
+  paper_size: [ 210, 240 ]    # mm
+
+datetime: 2020-07-28 15:49:00 +10
+coordinates: '27.0 S, 153.0 E'

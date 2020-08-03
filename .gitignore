@@ -4,5 +4,12 @@ __pycache__
 # VS Code Setup
 .vscode
 
+# Downloaded constellation and star data
+constellationship.fab
+de421.bsp
+deltat.*
+hip_main.dat.gz
+Leap_Second.dat
+
 # Output SVG files
 *.svg
