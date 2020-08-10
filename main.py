@@ -66,13 +66,16 @@ def brightness(magnitude):
 
 star_markers  = brightness(stars['magnitude'].values)
 star_markers -= brightness(config['output']['max_magnitude'])  # Normalise
-bright, = np.where(star_markers > 0)
+bright, = np.where(np.logical_and(
+    star_markers > 1,
+    np.any(abs(star_centers) <= 1000, axis=1),
+))
 
 # The constellation outlines come from Stellarium. We make a list of the stars
 # at which each edge stars, and the star at which each edge ends.
 
-url = ('https://raw.githubusercontent.com/Stellarium/stellarium/master'
-       '/skycultures/western_SnT/constellationship.fab')
+url = ('https://raw.githubusercontent.com/Stellarium/stellarium/'
+       'master/skycultures/western_SnT/constellationship.fab')
 
 with load.open(url) as file:
     constellations = stellarium.parse_constellations(file)
@@ -91,14 +94,24 @@ edges = [
 dwg = svg.Drawing(filename='starcover.svg', size=('300mm', '300mm'))
 dwg.viewbox(minx=-1000, miny=-1000, width=2000, height=2000)
 
+star_group = dwg.g(
+    fill=UQS_BLUE,
+    fill_opacity=1,
+    stroke='none'
+)
+
 for center, marker in zip(star_centers[bright], star_markers[bright]):
-    dwg.add(dwg.circle(
+    star_group.add(dwg.circle(
         center=center.round(2),
-        r=marker.round(2),
-        fill=UQS_BLUE
+        r=marker.round(1),
     ))
 
-constellation_group = dwg.g(stroke=UQS_BLUE, stroke_width=0.5)
+constellation_group = dwg.g(
+    stroke=UQS_BLUE,
+    stroke_width=0.25,
+    stroke_opacity=0.25,
+    fill='none'
+)
 
 for (start, end) in edges:
     constellation_group.add(dwg.line(
@@ -106,5 +119,6 @@ for (start, end) in edges:
         end=star_centers[end].round(2)
     ))
 
+dwg.add(star_group)
 dwg.add(constellation_group)
 dwg.save(pretty=True, indent=4)
