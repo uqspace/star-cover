@@ -11,8 +11,8 @@ import yaml
 
 from util import stereographicProjection
 
-UQS_BLUE = '#091544'
-SCALE    = 1000
+UQ_PURPLE = '#51247A'
+SCALE     = 1000
 
 
 # Load timescale and ephemeris from JPL
@@ -95,9 +95,10 @@ dwg = svg.Drawing(filename='starcover.svg', size=('300mm', '300mm'))
 dwg.viewbox(minx=-1000, miny=-1000, width=2000, height=2000)
 
 star_group = dwg.g(
-    fill=UQS_BLUE,
+    fill='#FFFFFF',
     fill_opacity=1,
-    stroke='none'
+    stroke=UQ_PURPLE,
+    stroke_width=0.25
 )
 
 for center, marker in zip(star_centers[bright], star_markers[bright]):
@@ -107,7 +108,7 @@ for center, marker in zip(star_centers[bright], star_markers[bright]):
     ))
 
 constellation_group = dwg.g(
-    stroke=UQS_BLUE,
+    stroke='#FFFFFF',
     stroke_width=0.25,
     stroke_opacity=0.25,
     fill='none'
