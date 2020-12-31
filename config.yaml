@@ -7,5 +7,5 @@ output:
   field_of_view: 180          # deg
   paper_size: [ 210, 240 ]    # mm
 
-datetime: 2020-10-24 12:00:00 +10
+datetime: 2021-01-01 00:00:00 +10
 coordinates: '27.0 S, 153.0 E'
