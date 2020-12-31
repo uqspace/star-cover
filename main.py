@@ -12,7 +12,14 @@ import yaml
 from util import stereographicProjection
 
 UQ_PURPLE = '#51247A'
+WHITE     = '#FFFFFF'
 SCALE     = 1000
+
+SIZES  = {'A4': ('210mm', '297mm')}
+RATIOS = {
+    key: float(height.strip('mm')) / float(width.strip('mm'))
+    for key, (width, height) in SIZES.items()
+}
 
 
 # Load timescale and ephemeris from JPL
@@ -63,12 +70,15 @@ star_centers = SCALE * np.stack(stereographicProjection(
 def brightness(magnitude):
     return 20 * 100**(-0.02*magnitude)
 
-
 star_markers  = brightness(stars['magnitude'].values)
 star_markers -= brightness(config['output']['max_magnitude'])  # Normalise
+max_x, max_y  = SCALE, SCALE*RATIOS['A4']
 bright, = np.where(np.logical_and(
     star_markers > 1,
-    np.any(abs(star_centers) <= 1000, axis=1),
+    np.logical_and(
+        abs(star_centers[:, 0]) <= max_x,
+        abs(star_centers[:, 1]) <= max_y,
+    ),
 ))
 
 # The constellation outlines come from Stellarium. We make a list of the stars
@@ -91,35 +101,40 @@ edges = [
 
 # Time to build the map!
 
-dwg = svg.Drawing(filename='starcover.svg', size=('300mm', '300mm'))
-dwg.viewbox(minx=-1000, miny=-1000, width=2000, height=2000)
+for variant, color, opacity in (('', WHITE, 1.0), ('_filled', UQ_PURPLE, 0.5)):
+    dwg = svg.Drawing(filename=f'starcover{variant}.svg', size=SIZES['A4'])
+    dwg.viewbox(
+        minx=-max_x, miny=-max_y,
+        width=2*max_x, height=2*max_y
+    )
 
-star_group = dwg.g(
-    fill='#FFFFFF',
-    fill_opacity=1,
-    stroke=UQ_PURPLE,
-    stroke_width=0.25
-)
+    star_group = dwg.g(
+        fill=color,
+        fill_opacity=opacity,
+        stroke=UQ_PURPLE,
+        stroke_width=0.25,
+        stroke_opacity=0.25
+    )
 
-for center, marker in zip(star_centers[bright], star_markers[bright]):
-    star_group.add(dwg.circle(
-        center=center.round(2),
-        r=marker.round(1),
-    ))
+    for center, marker in zip(star_centers[bright], star_markers[bright]):
+        star_group.add(dwg.circle(
+            center=center.round(2),
+            r=marker.round(1),
+        ))
 
-constellation_group = dwg.g(
-    stroke='#FFFFFF',
-    stroke_width=0.25,
-    stroke_opacity=0.25,
-    fill='none'
-)
+    constellation_group = dwg.g(
+        stroke=color,
+        stroke_width=0.25,
+        stroke_opacity=0.25,
+        fill='none'
+    )
 
-for (start, end) in edges:
-    constellation_group.add(dwg.line(
-        start=star_centers[start].round(2),
-        end=star_centers[end].round(2)
-    ))
+    for (start, end) in edges:
+        constellation_group.add(dwg.line(
+            start=star_centers[start].round(2),
+            end=star_centers[end].round(2)
+        ))
 
-dwg.add(star_group)
-dwg.add(constellation_group)
-dwg.save(pretty=True, indent=4)
+    dwg.add(constellation_group)
+    dwg.add(star_group)
+    dwg.save(pretty=True, indent=4)
