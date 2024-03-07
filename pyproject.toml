@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "star-cover"
+version = "0.1.0"
+description = "Generates a star (ch)art for report cover pages"
+authors = ["Alex Muirhead <alexandermuirhead@hotmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+skyfield = "^1.48"
+numpy = "^1.26.4"
+svgwrite = "^1.4.3"
+timezonefinder = "^6.4.1"
+
+[tool.poetry.group.dev.dependencies]
+pytz = "^2024.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
