@@ -9,7 +9,7 @@ poetry.lock
 constellationship.fab
 de421.bsp
 deltat.*
-hip_main.dat.*
+hip_main.dat*
 Leap_Second.dat
 
 # Output SVG files
