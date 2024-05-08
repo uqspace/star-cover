@@ -1,0 +1,10 @@
+datetime = 2024-06-24 12:00:00+10:00
+coordinates = { lat = -27.0, lon = 153.0 }
+
+[output]
+# Magnitude is an inverse logarithmic scale, with decreasing brightness
+# having a increasing magnitude. For more information, see
+# https://www.wikiwand.com/en/Magnitude_(astronomy)
+max_magnitude = 6.5
+field_of_view = 180          # deg
+image_size = [ 210, 240 ]    # mm
