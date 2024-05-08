@@ -1,5 +1,6 @@
 # Python Cache files
 __pycache__
+poetry.lock
 
 # VS Code Setup
 .vscode
@@ -8,7 +9,7 @@ __pycache__
 constellationship.fab
 de421.bsp
 deltat.*
-hip_main.dat.gz
+hip_main.dat.*
 Leap_Second.dat
 
 # Output SVG files
