@@ -73,8 +73,9 @@ alt, az, _ = location.at(timestamp) \
     .apparent() \
     .altaz()
 
-# star_centers = np.stack(cylindricalProjection(alt.radians, az.radians), axis=1)
-star_centers = np.stack(stereographicProjection(alt.radians, az.radians), axis=1)
+projection = cylindricalProjection
+# projection = stereographicProjection
+star_centers = np.stack(projection(alt.radians, az.radians), axis=1)
 star_centers = np.round(SCALE * star_centers, decimals=2)
 
 
@@ -112,7 +113,8 @@ star_group = dwg.g(
     fill=UQ_PURPLE,
     fill_opacity=1,
     stroke=UQ_PURPLE,
-    stroke_width=0.25
+    stroke_width=0.25,
+    clip_path='url(#clipCanvas)'
 )
 
 for center, marker in zip(star_centers[bright], star_markers[bright]):
@@ -128,12 +130,34 @@ constellation_group = dwg.g(
 
 for name, edges in constellations:
     for (startID, endID) in edges:
-        # Check if we've crossed the "split" on the sky at az = 2pi
-        # if abs(az[startID].radians - az[endID].radians) > np.pi:
-        #     ...
         start, end = star_centers[[startID, endID]]
-        # We should trim the line to the viewbox?
-        constellation_group.add(Line(start=start, end=end))
+
+        if any(np.isnan(start)):
+            print(f"Skipping ill-defined star {startID} in constellation {name}")
+            continue
+        elif any(np.isnan(end)):
+            print(f"Skipping ill-defined star {endID} in constellation {name}")
+            continue
+
+        # Check if we've crossed the "split" on the sky at az = 2pi
+        if start[0] - end[0] > SCALE:
+            # Create two new fake stars, and duplicate the lines
+            fakeStart = start - [2*SCALE, 0]
+            fakeEnd = end + [2*SCALE, 0]
+
+            constellation_group.add(Line(start=fakeStart, end=end))
+            constellation_group.add(Line(start=start, end=fakeEnd))
+
+        elif end[0] - start[0] > SCALE:
+            # Create two new fake stars, and duplicate the lines
+            fakeStart = start + [2*SCALE, 0]
+            fakeEnd = end - [2*SCALE, 0]
+
+            constellation_group.add(Line(start=fakeStart, end=end))
+            constellation_group.add(Line(start=start, end=fakeEnd))
+
+        else:
+            constellation_group.add(Line(start=start, end=end))
 
 dwg.add(star_group)
 dwg.add(constellation_group)
