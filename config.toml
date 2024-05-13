@@ -1,6 +1,7 @@
+[observer]
 datetime = 2024-06-24 12:00:00+10:00
 # coordinates = { lat = -27.0, lon = 153.0 }
-coordinates = { lat = 33.0, lon = -107.0 }
+location = { lat = 33.0, lon = -107.0 }
 
 [output]
 # Magnitude is an inverse logarithmic scale, with decreasing brightness
