@@ -16,8 +16,6 @@ import tomlkit as toml
 from util import stereographicProjection, cylindricalProjection
 
 
-# UQ_PURPLE = '#51247A'
-UQ_PURPLE  = '#000000'
 SCALE      = 1000
 RESOLUTION = 1000
 
@@ -62,6 +60,23 @@ def fromConfig(config) -> positionlib.Barycentric:
     return place.at(time)
 
 
+@dataclass
+class Display:
+    width: int
+    height: int
+
+    @property
+    def size(self):
+        return (self.width, self.height)
+
+    @property
+    def bottomLeft(self):
+        return (-self.width//2, -self.height//2)
+
+
+display = Display(width=1000, height=1000)
+
+
 with open('config.toml') as file:
     config = toml.load(file).unwrap()
 
@@ -84,7 +99,7 @@ alt, az, _ = observer \
 projection = cylindricalProjection
 # projection = stereographicProjection
 star_centers = np.stack(projection(alt.radians, az.radians), axis=1)
-star_centers = np.round(SCALE * star_centers, decimals=2)
+star_centers = np.round(star_centers * display.size, decimals=2)
 
 
 def brightness(magnitude):
@@ -112,16 +127,19 @@ with load.open(url) as file:
 
 # Time to build the map!
 
+
 dwg = svg.Drawing(filename='starcover.svg', size=('300mm', '300mm'))
-dwg.viewbox(minx=-1000, miny=-1000, width=2000, height=2000)
+dwg.viewbox(
+    minx=-display.width//2, miny=-display.height//2, 
+    width=display.width, height=display.height
+)
+
 clip_path = dwg.defs.add(dwg.clipPath(id="clipCanvas"))
-clip_path.add(Rect(insert=(-1000, -1000), size=(2000, 2000)))
+clip_path.add(Rect(insert=display.bottomLeft, size=display.size))
 
 star_group = dwg.g(
-    fill=UQ_PURPLE,
-    fill_opacity=1,
-    stroke=UQ_PURPLE,
-    stroke_width=0.25,
+    fill="black", fill_opacity=1,
+    stroke="black", stroke_width=0.25,
     clip_path='url(#clipCanvas)'
 )
 
@@ -129,9 +147,7 @@ for center, marker in zip(star_centers[bright], star_markers[bright]):
     star_group.add(Circle(center=center, r=marker))
 
 constellation_group = dwg.g(
-    stroke=UQ_PURPLE,
-    stroke_width=0.5,
-    stroke_opacity=0.5,
+    stroke="black", stroke_width=0.5, stroke_opacity=0.5,
     fill='none',
     clip_path='url(#clipCanvas)'
 )
@@ -148,18 +164,18 @@ for name, edges in constellations:
             continue
 
         # Check if we've crossed the "split" on the sky at az = 2pi
-        if start[0] - end[0] > SCALE:
+        if start[0] - end[0] > display.width/2:
             # Create two new fake stars, and duplicate the lines
-            fakeStart = start - [2*SCALE, 0]
-            fakeEnd = end + [2*SCALE, 0]
+            fakeStart = start - [display.width, 0]
+            fakeEnd = end + [display.width, 0]
 
             constellation_group.add(Line(start=fakeStart, end=end))
             constellation_group.add(Line(start=start, end=fakeEnd))
 
-        elif end[0] - start[0] > SCALE:
+        elif end[0] - start[0] > display.width/2:
             # Create two new fake stars, and duplicate the lines
-            fakeStart = start + [2*SCALE, 0]
-            fakeEnd = end - [2*SCALE, 0]
+            fakeStart = start + [display.width, 0]
+            fakeEnd = end - [display.width, 0]
 
             constellation_group.add(Line(start=fakeStart, end=end))
             constellation_group.add(Line(start=start, end=fakeEnd))
