@@ -12,7 +12,7 @@ import tomlkit as toml
 import papersize
 
 from starcover import observer
-from starcover.styling import ElementStyle
+from starcover.schema import Config
 
 from util import stereographicProjection, cylindricalProjection
 
@@ -61,7 +61,7 @@ display = Display(width=1000, height=1000)
 
 
 with open('config.toml') as file:
-    config = toml.load(file).unwrap()
+    config = Config(**toml.load(file).unwrap())
 
 
 # The Hipparcos mission provides our star catalog.
@@ -71,7 +71,7 @@ with load.open(hipparcos.URL) as file:
     # Do some data cleaning. Sort and fill, so the hip ID corresponds to row index
     stars = stars.reindex(index=pd.RangeIndex(0, stars.index.max()+1), fill_value=np.nan)
 
-alt, az, _ = observer.fromConfig(config['observer']) \
+alt, az, _ = observer.fromConfig(config.observer) \
     .observe(Star.from_dataframe(stars)) \
     .apparent() \
     .altaz()
@@ -87,7 +87,7 @@ def brightness(magnitude):
 
 
 star_markers  = brightness(stars['magnitude'].values)
-star_markers -= brightness(config['output']['max_magnitude'])  # Normalise
+star_markers -= brightness(config.output.max_magnitude)  # Normalise
 star_markers  = np.round(star_markers, decimals=1)
 bright, = np.where(np.logical_and(
     # Ensure stars are bright enough
@@ -107,8 +107,8 @@ with load.open(url) as file:
 
 # Time to build the map!
 
-page = Page.fromString(config["output"]["image_size"])
-dwg = svg.Drawing(filename='starcover.svg', size=page.size)
+page = Page.fromString(config.output.size)
+dwg = svg.Drawing(filename=config.output.name, size=page.size)
 dwg.viewbox(
     minx=-display.width//2, miny=-display.height//2, 
     width=display.width, height=display.height
@@ -119,15 +119,16 @@ clip_path.add(Rect(insert=display.bottomLeft, size=display.size))
 
 star_group = dwg.g(
     clip_path=clip_path.get_funciri(),
-    **ElementStyle(**config['style']['stars']).dump()
+    **config.style.stars.flat_dump()
 )
 
 constellation_group = dwg.g(
     clip_path=clip_path.get_funciri(),
-    **ElementStyle(**config['style']['constellations']).dump()
+    **config.style.constellations.flat_dump()
 )
 
 for center, marker in zip(star_centers[bright], star_markers[bright]):
+    # Move checking for the center to a filter here
     star_group.add(Circle(center=center, r=marker))
 
 for name, edges in constellations:

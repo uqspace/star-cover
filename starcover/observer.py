@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from datetime import datetime
 
 from skyfield.api import load, wgs84
 from skyfield import positionlib
 
+from .schema import Observer
 
 @dataclass
 class GeographicCoordinate:
@@ -23,14 +23,14 @@ class GeographicCoordinate:
         return timezoneString
 
 
-def fromConfig(config) -> positionlib.Barycentric:
+def fromConfig(config: Observer) -> positionlib.Barycentric:
     # Load data from skyfield
     planets = load("de421.bsp")
     timescale = load.timescale()
 
     # Validate config data
-    coordinate = GeographicCoordinate(**config["location"])
-    timestamp: datetime = config['datetime']
+    coordinate = GeographicCoordinate(**config.location)
+    timestamp = config.datetime
     if timestamp.tzinfo is None:
         from zoneinfo import ZoneInfo
         timestamp = timestamp.replace(tzinfo=ZoneInfo(coordinate.findTimezone()))

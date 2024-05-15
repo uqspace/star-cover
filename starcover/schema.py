@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any,Optional
 from pydantic import BaseModel, Field
 
@@ -25,6 +26,28 @@ class ElementStyle(BaseModel):
         raw = super().model_dump(*args, **kwargs)
         return {k: v for subset in raw.values() for k, v in subset.items()}
 
-    def dump(self) -> dict[str, Any]:
+    def flat_dump(self) -> dict[str, Any]:
         return self.model_dump(by_alias=True, exclude_unset=True)
 
+
+class Style(BaseModel):
+    stars: ElementStyle
+    constellations: ElementStyle
+
+
+class Observer(BaseModel):
+    datetime: datetime
+    location: dict[str, float]
+
+
+class Output(BaseModel):
+    name: str
+    max_magnitude: float
+    field_of_view: float
+    size: str
+
+
+class Config(BaseModel):
+    observer: Observer
+    output: Output
+    style: Style

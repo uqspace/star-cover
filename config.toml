@@ -7,9 +7,10 @@ location = { lat = 33.0, lon = -107.0 }
 # Magnitude is an inverse logarithmic scale, with decreasing brightness
 # having a increasing magnitude. For more information, see
 # https://www.wikiwand.com/en/Magnitude_(astronomy)
+name = "starcover"
 max_magnitude = 6.5
 field_of_view = 180          # deg
-image_size = "300mm x 300mm"
+size = "300mm x 300mm"
 
 [style.stars]
 fill = { color = "black", opacity = 1 }
