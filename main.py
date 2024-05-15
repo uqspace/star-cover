@@ -1,63 +1,23 @@
 from dataclasses import dataclass
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
 
-from skyfield.api import Star, load, wgs84
+from skyfield.api import Star, load
 from skyfield.data import hipparcos, stellarium
-
-from skyfield import positionlib
 
 import svgwrite as svg
 from svgwrite.shapes import Circle, Line, Rect
 import tomlkit as toml
+import papersize
+
+from starcover import observer
 
 from util import stereographicProjection, cylindricalProjection
 
 
 SCALE      = 1000
 RESOLUTION = 1000
-
-
-@dataclass
-class GeographicCoordinate:
-    lat: float
-    lon: float
-
-    def findTimezone(self) -> str:
-
-        from timezonefinder import TimezoneFinder
-
-        searchEngine   = TimezoneFinder(in_memory=True)
-        timezoneString = searchEngine.timezone_at(lat=self.lat, lng=self.lon)
-
-        if timezoneString is None:
-            raise ValueError(f"No valid timezone at {self}")
-
-        return timezoneString
-
-
-def fromConfig(config) -> positionlib.Barycentric:
-    # Load data from skyfield
-    planets = load("de421.bsp")
-    timescale = load.timescale()
-
-    # Validate config data
-    coordinate = GeographicCoordinate(**config["location"])
-    timestamp: datetime = config['datetime']
-    if timestamp.tzinfo is None:
-        from zoneinfo import ZoneInfo
-        timestamp = timestamp.replace(tzinfo=ZoneInfo(coordinate.findTimezone()))
-
-    # Construct location in skyfield data-format
-    time = timescale.from_datetime(timestamp)
-    place = planets['earth'] + wgs84.latlon(
-        latitude_degrees=coordinate.lat,
-        longitude_degrees=coordinate.lon
-    )
-
-    return place.at(time)
 
 
 @dataclass
@@ -74,6 +34,28 @@ class Display:
         return (-self.width//2, -self.height//2)
 
 
+@dataclass
+class Page:
+    width: float
+    height: float
+    unit: str = "mm"
+
+    @classmethod
+    def setUnit(cls, unit: str):
+        if unit not in papersize.UNITS:
+            raise ValueError(f"Unknown unit `{unit}`")
+        cls.unit = unit
+
+    @classmethod
+    def fromString(cls, string: str) -> 'Page':
+        width, height = papersize.parse_papersize(string, unit = cls.unit)
+        return Page(width=float(width), height=float(height))
+
+    @property
+    def size(self) -> tuple[str, str]:
+        return (str(self.width) + self.unit, str(self.height) + self.unit)
+
+
 display = Display(width=1000, height=1000)
 
 
@@ -88,10 +70,7 @@ with load.open(hipparcos.URL) as file:
     # Do some data cleaning. Sort and fill, so the hip ID corresponds to row index
     stars = stars.reindex(index=pd.RangeIndex(0, stars.index.max()+1), fill_value=np.nan)
 
-
-observer = fromConfig(config['observer'])
-
-alt, az, _ = observer \
+alt, az, _ = observer.fromConfig(config['observer']) \
     .observe(Star.from_dataframe(stars)) \
     .apparent() \
     .altaz()
@@ -127,8 +106,8 @@ with load.open(url) as file:
 
 # Time to build the map!
 
-
-dwg = svg.Drawing(filename='starcover.svg', size=('300mm', '300mm'))
+page = Page.fromString(config["output"]["image_size"])
+dwg = svg.Drawing(filename='starcover.svg', size=page.size)
 dwg.viewbox(
     minx=-display.width//2, miny=-display.height//2, 
     width=display.width, height=display.height
