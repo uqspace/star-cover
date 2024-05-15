@@ -11,10 +11,10 @@ max_magnitude = 6.5
 field_of_view = 180          # deg
 image_size = "300mm x 300mm"
 
-[style.star]
+[style.stars]
 fill = { color = "black", opacity = 1 }
 stroke = { color = "black", width = 0.25 }
 
-[style.constellation]
+[style.constellations]
 fill = { color = "none" }
 stroke = { color = "black" }

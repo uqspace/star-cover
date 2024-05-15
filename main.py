@@ -12,11 +12,11 @@ import tomlkit as toml
 import papersize
 
 from starcover import observer
+from starcover.styling import ElementStyle
 
 from util import stereographicProjection, cylindricalProjection
 
 
-SCALE      = 1000
 RESOLUTION = 1000
 
 
@@ -56,6 +56,7 @@ class Page:
         return (str(self.width) + self.unit, str(self.height) + self.unit)
 
 
+# If this is a different ratio to the page, then we get a stretched output
 display = Display(width=1000, height=1000)
 
 
@@ -63,7 +64,7 @@ with open('config.toml') as file:
     config = toml.load(file).unwrap()
 
 
-# # The Hipparcos mission provides our star catalog.
+# The Hipparcos mission provides our star catalog.
 
 with load.open(hipparcos.URL) as file:
     stars = hipparcos.load_dataframe(file)
@@ -117,19 +118,17 @@ clip_path = dwg.defs.add(dwg.clipPath(id="clipCanvas"))
 clip_path.add(Rect(insert=display.bottomLeft, size=display.size))
 
 star_group = dwg.g(
-    fill="black", fill_opacity=1,
-    stroke="black", stroke_width=0.25,
-    clip_path='url(#clipCanvas)'
+    clip_path=clip_path.get_funciri(),
+    **ElementStyle(**config['style']['stars']).dump()
+)
+
+constellation_group = dwg.g(
+    clip_path=clip_path.get_funciri(),
+    **ElementStyle(**config['style']['constellations']).dump()
 )
 
 for center, marker in zip(star_centers[bright], star_markers[bright]):
     star_group.add(Circle(center=center, r=marker))
-
-constellation_group = dwg.g(
-    stroke="black", stroke_width=0.5, stroke_opacity=0.5,
-    fill='none',
-    clip_path='url(#clipCanvas)'
-)
 
 for name, edges in constellations:
     for (startID, endID) in edges:
