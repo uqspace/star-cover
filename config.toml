@@ -18,4 +18,4 @@ stroke = { color = "black", width = 0.25 }
 
 [style.constellations]
 fill = { color = "none" }
-stroke = { color = "black" }
+stroke = { color = "black", width = 1 }

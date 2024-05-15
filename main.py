@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import PurePath
 
 import numpy as np
 import pandas as pd
@@ -18,20 +19,6 @@ from util import stereographicProjection, cylindricalProjection
 
 
 RESOLUTION = 1000
-
-
-@dataclass
-class Display:
-    width: int
-    height: int
-
-    @property
-    def size(self):
-        return (self.width, self.height)
-
-    @property
-    def bottomLeft(self):
-        return (-self.width//2, -self.height//2)
 
 
 @dataclass
@@ -56,13 +43,32 @@ class Page:
         return (str(self.width) + self.unit, str(self.height) + self.unit)
 
 
-# If this is a different ratio to the page, then we get a stretched output
-display = Display(width=1000, height=1000)
+@dataclass
+class Display:
+    width: int
+    height: int
+
+    @staticmethod
+    def fromPage(page: Page, resolution: float) -> 'Display':
+        # Ensure that the width and height are odd (2k + 1 for integer k)
+        width = int(page.width * resolution / 2) * 2 + 1
+        height = int(page.height * resolution / 2) * 2 + 1
+        return Display(width=width, height=height)
+
+    @property
+    def size(self):
+        return (self.width, self.height)
+
+    @property
+    def bottomLeft(self):
+        return (-self.width/2, -self.height/2)
 
 
 with open('config.toml') as file:
     config = Config(**toml.load(file).unwrap())
 
+page = Page.fromString(config.output.size)
+display = Display.fromPage(page, resolution=5)
 
 # The Hipparcos mission provides our star catalog.
 
@@ -79,7 +85,7 @@ alt, az, _ = observer.fromConfig(config.observer) \
 projection = cylindricalProjection
 # projection = stereographicProjection
 star_centers = np.stack(projection(alt.radians, az.radians), axis=1)
-star_centers = np.round(star_centers * display.size, decimals=2)
+star_centers = np.round(star_centers * display.size / 2, decimals=2)
 
 
 def brightness(magnitude):
@@ -107,8 +113,10 @@ with load.open(url) as file:
 
 # Time to build the map!
 
-page = Page.fromString(config.output.size)
-dwg = svg.Drawing(filename=config.output.name, size=page.size)
+dwg = svg.Drawing(
+    filename=str(PurePath(config.output.name).with_suffix(".svg")),
+    size=page.size
+)
 dwg.viewbox(
     minx=-display.width//2, miny=-display.height//2, 
     width=display.width, height=display.height
@@ -143,7 +151,7 @@ for name, edges in constellations:
             continue
 
         # Check if we've crossed the "split" on the sky at az = 2pi
-        if start[0] - end[0] > display.width/2:
+        if az.radians[startID] - az.radians[endID] > np.pi:
             # Create two new fake stars, and duplicate the lines
             fakeStart = start - [display.width, 0]
             fakeEnd = end + [display.width, 0]
@@ -151,7 +159,7 @@ for name, edges in constellations:
             constellation_group.add(Line(start=fakeStart, end=end))
             constellation_group.add(Line(start=start, end=fakeEnd))
 
-        elif end[0] - start[0] > display.width/2:
+        elif az.radians[endID] - az.radians[startID] > np.pi:
             # Create two new fake stars, and duplicate the lines
             fakeStart = start + [display.width, 0]
             fakeEnd = end - [display.width, 0]
