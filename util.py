@@ -26,7 +26,7 @@ def stereographicProjection(alt, az):
     return x/(1+z), y/(1+z)
 
 
-def cylindricalProjection(alt, az):
+def cylindricalProjection(alt, az, shifted=False):
     """Project stars onto an equirectangular plan.
 
     Parameters
@@ -44,7 +44,36 @@ def cylindricalProjection(alt, az):
         The (x, y) coordinates of each star, calculated using an
         equirectangular projection, to maintain equal areas.
     """
-    x = np.interp(az, [0, 2*np.pi], [-1, +1])
+    if shifted:
+        az += np.pi
+        alt *= -1
+    x = np.interp(az, [0, 2*np.pi], [-1, +1], period=2*np.pi)
+    y = np.sin(alt)
+
+    return x, y
+
+
+def shiftedCylindricalProjection(alt, az):
+    """Project stars onto an equirectangular plan.
+
+    Parameters
+    ----------
+    alt : np.ndarray
+        The altitude of a star, relative to an observer.
+        Values are processed as radians.
+    az : np.ndarray
+        The azimuth of a star, relative to an observer.
+        Values are processed as radians.
+
+    Returns
+    -------
+    (np.ndarray, np.ndarray)
+        The (x, y) coordinates of each star, calculated using an
+        equirectangular projection, to maintain equal areas.
+    """
+    az += np.pi
+    alt *= -1
+    x = np.interp(az, [0, 2*np.pi], [-1, +1], period=2*np.pi)
     y = np.sin(alt)
 
     return x, y
