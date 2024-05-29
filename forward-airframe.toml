@@ -1,20 +1,21 @@
 [observer]
 datetime = 2024-06-24 12:00:00+10:00
-location = { lat = -27.0, lon = 153.0 }
+# location = { lat = -27.0, lon = 153.0 }
+location = { lat = 33.0, lon = -107.0 }
 
 [output]
 # Magnitude is an inverse logarithmic scale, with decreasing brightness
 # having a increasing magnitude. For more information, see
 # https://www.wikiwand.com/en/Magnitude_(astronomy)
-name = "starcover"
+name = "forward-airframe"
 max_magnitude = 6.5
 field_of_view = 180          # deg
-size = "300mm x 300mm"
+size = "483.614mm x 600mm"
 
 [style.stars]
-fill = { color = "black", opacity = 1 }
-stroke = { color = "black", width = 0.25 }
+fill = { color = "white", opacity = 1 }
+stroke = { color = "white", width = 0.25 }
 
 [style.constellations]
 fill = { color = "none" }
-stroke = { color = "black", width = 1 }
+stroke = { color = "white", width = 1 }
